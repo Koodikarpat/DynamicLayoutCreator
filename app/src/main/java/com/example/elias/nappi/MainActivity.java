@@ -13,25 +13,28 @@ import android.view.View;
 import android.view.Menu;
 import android.widget.AbsListView;
 import android.widget.Button;
+import android.widget.GridLayout;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import java.util.ArrayList;
 
-public class MainActivity extends AppCompatActivity {
-    Matrix matrix= new Matrix();
-    Float scale = 1f;
-    ScaleGestureDetector SGD;
+public class MainActivity extends AppCompatActivity implements View.OnTouchListener {
 
     private float dX;
     private float dY;
+
     private ArrayList<Integer> buttons;
     private int lastAction;
     private ImageView nappi;
 
-    private View.OnTouchListener onTouchListener;
 
+    private Matrix matrix = new Matrix();
+    Float scale = 1f;
+    ScaleGestureDetector SGD;
+
+    private int mPtrCount;
 
 
     @Override
@@ -41,71 +44,71 @@ public class MainActivity extends AppCompatActivity {
 
         buttons = new ArrayList<>();
         nappi = (ImageView) findViewById(R.id.nappi);
+
         SGD = new ScaleGestureDetector(this, new ScaleListener());
+        mPtrCount=0;
 
-
-        nappi.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                addbutton();
-                return false;
-            }
-
-        });
-
-
-        onTouchListener = new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                switch (event.getAction()) {
-                    case MotionEvent.ACTION_DOWN:
-                        lastAction = MotionEvent.ACTION_DOWN;
-                        dX = v.getX() - event.getRawX();
-                        dY = v.getY() - event.getRawY();
-                        break;
-                    case MotionEvent.ACTION_MOVE:
-                        lastAction = MotionEvent.ACTION_MOVE;
-                        v.setX(event.getRawX() + dX);
-                        v.setY(event.getRawY()  + dY);
-                        break;
-                }
-                return true;
-            }
-        };
+        nappi.setOnTouchListener(this);
 
     }
 
-private class ScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureListener {
     @Override
-    public boolean onScale(ScaleGestureDetector detector) {
-        scale = scale * detector.getScaleFactor();
-        scale = Math.max(0.1f, Math.min(scale, 5f));
-        matrix.setScale(scale, scale);
-        nappi.setImageMatrix(matrix);
+    public boolean onTouch(View view, MotionEvent motionEvent) {
+        switch (motionEvent.getAction() & MotionEvent.ACTION_MASK) {
+            case MotionEvent.ACTION_DOWN:
+                mPtrCount++;
+                Log.d("mPtrCount: ",Integer.toString(mPtrCount));
+                if (mPtrCount==1) {
+                    addbutton();
+                    lastAction = MotionEvent.ACTION_DOWN;
+                    dX = view.getX() - motionEvent.getRawX();
+                    dY = view.getY() - motionEvent.getRawY();
+                }
+                if (mPtrCount ==2) {
+                    //starting distance between fingers
+                    lastAction = MotionEvent.ACTION_MOVE;
+                    view.setX(motionEvent.getRawX() + dX);
+                    view.setY(motionEvent.getRawY()  + dY);
+
+                }
+
+                break;
+            case MotionEvent.ACTION_MOVE:
+
+
+        }
         return true;
     }
 
-}
+    private class ScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureListener {
+        public ScaleListener() {
+        }
+        @Override
+        public boolean onScale(ScaleGestureDetector detector) {
+            scale = scale * detector.getScaleFactor();
+            scale = Math.max(0.1f, Math.min(scale, 5f));
+            matrix.setScale(scale, scale);
+            nappi.setImageMatrix(matrix);
+            return true;
+        }
+
+    }
 
 
 
     public void addbutton() {
-Button b = new Button(this);
-int id = View.generateViewId();
+        Button b = new Button(this);
+        int id = View.generateViewId();
         b.setText("nappi");
         b.setLayoutParams(new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT,
                 RelativeLayout.LayoutParams.WRAP_CONTENT));
         RelativeLayout rl = (RelativeLayout) findViewById(R.id.layout);
         rl.addView(b);
-        b.setOnTouchListener(onTouchListener);
+        b.setOnTouchListener(this);
         float Xpos = 800.0f;
         float Ypos = 800.0f;
         b.setX(Xpos);
         b.setY(Ypos);
-
-
-        //float, X, Y
-
 
 
 
@@ -115,5 +118,3 @@ int id = View.generateViewId();
         this.lastAction = lastAction;
     }
 }
-
-
